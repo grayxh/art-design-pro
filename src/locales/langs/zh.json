@@ -306,6 +306,12 @@
       "title": "运维管理",
       "server": "服务器管理"
     },
+    "subpackage": {
+      "title": "分包管理",
+      "list": "分包列表",
+      "company": "企业管理",
+      "personnel": "人员管理"
+    },
     "plan": {
       "title": "版本计划",
       "log": "更新日志"

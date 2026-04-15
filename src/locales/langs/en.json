@@ -306,6 +306,12 @@
       "title": "Safeguard",
       "server": "Server"
     },
+    "subpackage": {
+      "title": "Subpackage",
+      "list": "Subpackage List",
+      "company": "Company",
+      "personnel": "Personnel"
+    },
     "plan": {
       "title": "Version Plan",
       "log": "Change Log"
