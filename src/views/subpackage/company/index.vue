@@ -1,131 +1,134 @@
-<!-- 企业管理页面 -->
 <template>
-  <div class="page-content">
-    <ElCard shadow="never" class="mb-4">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-3 flex-wrap">
-          <ElInput
-            v-model="searchForm.name"
-            placeholder="请输入企业名称"
-            clearable
-            class="w-52"
-            @keyup.enter="handleSearch"
-          />
-          <ElSelect v-model="searchForm.type" placeholder="企业类型" clearable class="w-36">
-            <ElOption label="劳务企业" value="1" />
-            <ElOption label="专业分包企业" value="2" />
-            <ElOption label="材料供应企业" value="3" />
-          </ElSelect>
-          <ElSelect v-model="searchForm.status" placeholder="资质状态" clearable class="w-32">
-            <ElOption label="正常" value="1" />
-            <ElOption label="即将到期" value="2" />
-            <ElOption label="已过期" value="3" />
-          </ElSelect>
-          <ElButton type="primary" @click="handleSearch">
-            <template #icon><ArtIcon name="ri:search-line" /></template>
-            查询
-          </ElButton>
-          <ElButton @click="handleReset">
-            <template #icon><ArtIcon name="ri:refresh-line" /></template>
-            重置
-          </ElButton>
-        </div>
-        <ElButton type="primary" @click="handleAdd">
-          <template #icon><ArtIcon name="ri:add-line" /></template>
-          新增企业
-        </ElButton>
-      </div>
-    </ElCard>
-
-    <ElCard shadow="never">
-      <ElTable :data="tableData" stripe v-loading="loading" row-key="id">
-        <ElTableColumn prop="name" label="企业名称" min-width="180" show-overflow-tooltip />
-        <ElTableColumn prop="type" label="企业类型" width="130">
-          <template #default="{ row }">
-            <ElTag :type="typeTagMap[row.type]?.type" size="small">
-              {{ typeTagMap[row.type]?.label }}
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn prop="creditCode" label="统一信用代码" width="180" />
-        <ElTableColumn prop="legalPerson" label="法人代表" width="100" />
-        <ElTableColumn prop="contact" label="联系电话" width="130" />
-        <ElTableColumn prop="qualification" label="资质等级" width="110" />
-        <ElTableColumn prop="qualExpiry" label="资质到期日" width="120">
-          <template #default="{ row }">
-            <span :class="getExpiryClass(row.qualExpiry)">{{ row.qualExpiry }}</span>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn prop="workerCount" label="在场人数" width="90" align="right" />
-        <ElTableColumn prop="status" label="资质状态" width="100">
-          <template #default="{ row }">
-            <ElTag :type="statusTagMap[row.status]?.type" size="small">
-              {{ statusTagMap[row.status]?.label }}
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <ElButton link type="primary" size="small" @click="handleEdit(row)">编辑</ElButton>
-            <ElButton link type="primary" size="small" @click="handleDetail(row)">详情</ElButton>
-            <ElButton link type="danger" size="small" @click="handleDelete(row)">删除</ElButton>
-          </template>
-        </ElTableColumn>
-      </ElTable>
-
-      <div class="flex justify-end mt-4">
-        <ElPagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @change="fetchData"
+  <div class="company-page art-full-height">
+    <ArtSearchBar
+      v-model="searchForm"
+      :items="searchItems"
+      :span="8"
+      :show-expand="false"
+      @search="handleSearch"
+      @reset="handleReset"
+    >
+      <template #name>
+        <ElInput
+          v-model="searchForm.name"
+          placeholder="请输入企业名称"
+          clearable
+          @keyup.enter="handleSearch"
         />
-      </div>
+      </template>
+    </ArtSearchBar>
+
+    <ElCard class="art-table-card">
+      <ArtTableHeader
+        v-model:columns="columnChecks"
+        :loading="loading"
+        @refresh="fetchData"
+        layout="refresh,size,fullscreen,columns,settings"
+      >
+        <template #left>
+          <ElSpace wrap>
+            <ElButton type="primary" @click="handleAdd" v-ripple>
+              <ElIcon>
+                <Plus />
+              </ElIcon>
+              新增
+            </ElButton>
+          </ElSpace>
+        </template>
+      </ArtTableHeader>
+
+      <ArtTable
+        :loading="loading"
+        :data="tableData"
+        :columns="columns"
+        :pagination="pagination"
+        @pagination:size-change="handleSizeChange"
+        @pagination:current-change="handleCurrentChange"
+      >
+        <template #admissionStatus="{ row }">
+          <ElTag :type="admissionStatusMap[row.admissionStatus]?.type ?? 'info'" effect="light">
+            {{ admissionStatusMap[row.admissionStatus]?.label ?? '未知' }}
+          </ElTag>
+        </template>
+
+        <template #operation="{ row }">
+          <div class="flex">
+            <ArtButtonTable type="view" @click="handleDetail(row)" />
+            <ArtButtonTable type="edit" @click="handleEdit(row)" />
+            <ArtButtonTable type="delete" @click="handleDelete(row)" />
+          </div>
+        </template>
+      </ArtTable>
     </ElCard>
 
-    <!-- 新增/编辑弹窗 -->
     <ElDialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="640px"
       :close-on-click-modal="false"
       destroy-on-close
     >
       <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="110px">
-        <ElFormItem label="企业名称" prop="name">
-          <ElInput v-model="formData.name" placeholder="请输入企业名称" clearable />
-        </ElFormItem>
-        <ElFormItem label="企业类型" prop="type">
-          <ElSelect v-model="formData.type" placeholder="请选择企业类型" class="w-full">
-            <ElOption label="劳务企业" value="1" />
-            <ElOption label="专业分包企业" value="2" />
-            <ElOption label="材料供应企业" value="3" />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="统一信用代码" prop="creditCode">
-          <ElInput v-model="formData.creditCode" placeholder="请输入统一社会信用代码" clearable />
-        </ElFormItem>
-        <ElFormItem label="法人代表" prop="legalPerson">
-          <ElInput v-model="formData.legalPerson" placeholder="请输入法人代表姓名" clearable />
-        </ElFormItem>
-        <ElFormItem label="联系电话" prop="contact">
-          <ElInput v-model="formData.contact" placeholder="请输入联系电话" clearable />
-        </ElFormItem>
-        <ElFormItem label="资质等级" prop="qualification">
-          <ElInput v-model="formData.qualification" placeholder="请输入资质等级" clearable />
-        </ElFormItem>
-        <ElFormItem label="资质到期日" prop="qualExpiry">
-          <ElDatePicker
-            v-model="formData.qualExpiry"
-            type="date"
-            placeholder="请选择资质到期日"
-            value-format="YYYY-MM-DD"
-            class="w-full"
-          />
-        </ElFormItem>
+        <ElRow :gutter="16">
+          <ElCol :span="12">
+            <ElFormItem label="企业名称" prop="name">
+              <ElInput v-model="formData.name" placeholder="请输入企业名称" clearable />
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="简称" prop="shortName">
+              <ElInput v-model="formData.shortName" placeholder="请输入企业简称" clearable />
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="统一信用代码" prop="creditCode">
+              <ElInput v-model="formData.creditCode" placeholder="请输入统一信用代码" clearable />
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="纳税人规模" prop="taxpayerScale">
+              <ElSelect
+                v-model="formData.taxpayerScale"
+                placeholder="请选择纳税人规模"
+                class="w-full"
+              >
+                <ElOption label="一般纳税人" value="一般纳税人" />
+                <ElOption label="小规模纳税人" value="小规模纳税人" />
+              </ElSelect>
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="准入号" prop="admissionCode">
+              <ElInput v-model="formData.admissionCode" placeholder="请输入准入号" clearable />
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="准入状态" prop="admissionStatus">
+              <ElSelect
+                v-model="formData.admissionStatus"
+                placeholder="请选择准入状态"
+                class="w-full"
+              >
+                <ElOption
+                  v-for="item in admissionStatusOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </ElSelect>
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="联系人" prop="contactPerson">
+              <ElInput v-model="formData.contactPerson" placeholder="请输入联系人" clearable />
+            </ElFormItem>
+          </ElCol>
+          <ElCol :span="12">
+            <ElFormItem label="联系电话" prop="contactPhone">
+              <ElInput v-model="formData.contactPhone" placeholder="请输入联系电话" clearable />
+            </ElFormItem>
+          </ElCol>
+        </ElRow>
       </ElForm>
       <template #footer>
         <ElButton @click="dialogVisible = false">取消</ElButton>
@@ -137,178 +140,271 @@
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
+  import type { ColumnOption } from '@/types/component'
+  import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
+  import { Plus } from '@element-plus/icons-vue'
+  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import { useTableColumns } from '@/hooks/core/useTableColumns'
 
   defineOptions({ name: 'SubpackageCompany' })
 
   interface CompanyItem {
     id: number
     name: string
-    type: string
+    shortName: string
     creditCode: string
-    legalPerson: string
-    contact: string
-    qualification: string
-    qualExpiry: string
-    workerCount: number
-    status: string
+    taxpayerScale: string
+    admissionCode: string
+    admissionStatus: string
+    contactPerson: string
+    contactPhone: string
   }
 
-  const typeTagMap: Record<string, { label: string; type: 'primary' | 'success' | 'warning' }> = {
-    '1': { label: '劳务企业', type: 'primary' },
-    '2': { label: '专业分包企业', type: 'success' },
-    '3': { label: '材料供应企业', type: 'warning' }
+  const admissionStatusMap: Record<
+    string,
+    { label: string; type: 'success' | 'warning' | 'danger' | 'info' }
+  > = {
+    enabled: { label: '已准入', type: 'success' },
+    pending: { label: '待准入', type: 'warning' },
+    disabled: { label: '已停用', type: 'danger' }
   }
 
-  const statusTagMap: Record<string, { label: string; type: 'success' | 'warning' | 'danger' }> = {
-    '1': { label: '正常', type: 'success' },
-    '2': { label: '即将到期', type: 'warning' },
-    '3': { label: '已过期', type: 'danger' }
-  }
+  const admissionStatusOptions = [
+    { label: '已准入', value: 'enabled' },
+    { label: '待准入', value: 'pending' },
+    { label: '已停用', value: 'disabled' }
+  ]
 
-  const getExpiryClass = (date: string) => {
-    const diff = new Date(date).getTime() - Date.now()
-    const days = diff / (1000 * 60 * 60 * 24)
-    if (days < 0) return 'text-red-500'
-    if (days < 30) return 'text-orange-400'
-    return ''
-  }
-
+  const searchForm = ref<{ name?: string }>({ name: undefined })
   const loading = ref(false)
   const submitting = ref(false)
   const dialogVisible = ref(false)
   const dialogTitle = ref('新增企业')
   const formRef = ref<FormInstance>()
+  const currentEditId = ref<number | null>(null)
 
-  const searchForm = reactive({ name: '', type: '', status: '' })
-  const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+  const pagination = reactive({
+    current: 1,
+    size: 10,
+    total: 0
+  })
+
+  const tableData = ref<CompanyItem[]>([])
+
+  const searchItems: SearchFormItem[] = [
+    {
+      key: 'name',
+      label: '企业名称',
+      type: 'input',
+      span: 8,
+      placeholder: '请输入企业名称'
+    }
+  ]
 
   const formData = reactive<Partial<CompanyItem>>({
     name: '',
-    type: '',
+    shortName: '',
     creditCode: '',
-    legalPerson: '',
-    contact: '',
-    qualification: '',
-    qualExpiry: ''
+    taxpayerScale: '',
+    admissionCode: '',
+    admissionStatus: 'enabled',
+    contactPerson: '',
+    contactPhone: ''
   })
 
   const formRules: FormRules = {
     name: [{ required: true, message: '请输入企业名称', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择企业类型', trigger: 'change' }],
-    creditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }]
+    shortName: [{ required: true, message: '请输入企业简称', trigger: 'blur' }],
+    creditCode: [{ required: true, message: '请输入统一信用代码', trigger: 'blur' }],
+    taxpayerScale: [{ required: true, message: '请选择纳税人规模', trigger: 'change' }],
+    admissionCode: [{ required: true, message: '请输入准入号', trigger: 'blur' }],
+    admissionStatus: [{ required: true, message: '请选择准入状态', trigger: 'change' }],
+    contactPerson: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
+    contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
   }
 
-  const mockData: CompanyItem[] = [
+  const mockData = ref<CompanyItem[]>([
     {
       id: 1,
       name: '鑫盛建筑劳务有限公司',
-      type: '1',
+      shortName: '鑫盛劳务',
       creditCode: '91310000MA1FL5XX3X',
-      legalPerson: '张建国',
-      contact: '138-0000-1001',
-      qualification: '劳务承包壹级',
-      qualExpiry: '2025-06-30',
-      workerCount: 86,
-      status: '2'
+      taxpayerScale: '一般纳税人',
+      admissionCode: 'ZR20240001',
+      admissionStatus: 'enabled',
+      contactPerson: '张建国',
+      contactPhone: '13800001001'
     },
     {
       id: 2,
       name: '宏远钢结构工程有限公司',
-      type: '2',
+      shortName: '宏远钢构',
       creditCode: '91310000MA1GH7YY4Z',
-      legalPerson: '李明',
-      contact: '139-0000-2002',
-      qualification: '钢结构工程专业承包壹级',
-      qualExpiry: '2026-12-31',
-      workerCount: 42,
-      status: '1'
+      taxpayerScale: '一般纳税人',
+      admissionCode: 'ZR20240002',
+      admissionStatus: 'enabled',
+      contactPerson: '李明',
+      contactPhone: '13900002002'
     },
     {
       id: 3,
       name: '华通机电工程有限公司',
-      type: '2',
+      shortName: '华通机电',
       creditCode: '91310000MA1KJ9WW5A',
-      legalPerson: '王芳',
-      contact: '137-0000-3003',
-      qualification: '机电安装工程专业承包贰级',
-      qualExpiry: '2025-03-15',
-      workerCount: 58,
-      status: '3'
+      taxpayerScale: '小规模纳税人',
+      admissionCode: 'ZR20240003',
+      admissionStatus: 'pending',
+      contactPerson: '王芳',
+      contactPhone: '13700003003'
     },
     {
       id: 4,
       name: '恒泰建材供应链有限公司',
-      type: '3',
+      shortName: '恒泰建材',
       creditCode: '91310000MA1NP2VV6B',
-      legalPerson: '刘伟',
-      contact: '136-0000-4004',
-      qualification: '-',
-      qualExpiry: '2027-01-01',
-      workerCount: 12,
-      status: '1'
+      taxpayerScale: '一般纳税人',
+      admissionCode: 'ZR20240004',
+      admissionStatus: 'disabled',
+      contactPerson: '刘伟',
+      contactPhone: '13600004004'
     },
     {
       id: 5,
       name: '美家装饰劳务有限公司',
-      type: '1',
+      shortName: '美家装饰',
       creditCode: '91310000MA1QR4UU7C',
-      legalPerson: '陈晓',
-      contact: '135-0000-5005',
-      qualification: '劳务承包贰级',
-      qualExpiry: '2026-08-20',
-      workerCount: 34,
-      status: '1'
+      taxpayerScale: '小规模纳税人',
+      admissionCode: 'ZR20240005',
+      admissionStatus: 'enabled',
+      contactPerson: '陈晓',
+      contactPhone: '13500005005'
     }
-  ]
+  ])
 
-  const tableData = ref<CompanyItem[]>([])
+  const { columns, columnChecks } = useTableColumns<CompanyItem>(
+    () =>
+      [
+        {
+          type: 'index',
+          label: '序号',
+          width: 70
+        },
+        {
+          prop: 'name',
+          label: '企业名称',
+          minWidth: 180,
+          showOverflowTooltip: true
+        },
+        {
+          prop: 'shortName',
+          label: '简称',
+          minWidth: 120,
+          showOverflowTooltip: true
+        },
+        {
+          prop: 'creditCode',
+          label: '统一信用代码',
+          minWidth: 190
+        },
+        {
+          prop: 'taxpayerScale',
+          label: '纳税人规模',
+          minWidth: 130
+        },
+        {
+          prop: 'admissionCode',
+          label: '准入号',
+          minWidth: 130
+        },
+        {
+          prop: 'admissionStatus',
+          label: '准入状态',
+          width: 110,
+          useSlot: true
+        },
+        {
+          prop: 'contactPerson',
+          label: '联系人',
+          minWidth: 100
+        },
+        {
+          prop: 'contactPhone',
+          label: '联系电话',
+          minWidth: 140
+        },
+        {
+          prop: 'operation',
+          label: '操作',
+          width: 150,
+          fixed: 'right',
+          useSlot: true
+        }
+      ] as ColumnOption<CompanyItem>[]
+  )
 
   const fetchData = () => {
     loading.value = true
-    setTimeout(() => {
-      const filtered = mockData.filter((item) => {
-        const nameMatch = !searchForm.name || item.name.includes(searchForm.name)
-        const typeMatch = !searchForm.type || item.type === searchForm.type
-        const statusMatch = !searchForm.status || item.status === searchForm.status
-        return nameMatch && typeMatch && statusMatch
+
+    window.setTimeout(() => {
+      const keyword = searchForm.value.name?.trim()
+      const filtered = mockData.value.filter((item) => {
+        return !keyword || item.name.includes(keyword)
       })
+
       pagination.total = filtered.length
-      const start = (pagination.page - 1) * pagination.pageSize
-      tableData.value = filtered.slice(start, start + pagination.pageSize)
+
+      const start = (pagination.current - 1) * pagination.size
+      tableData.value = filtered.slice(start, start + pagination.size)
       loading.value = false
-    }, 300)
+    }, 200)
   }
 
   const handleSearch = () => {
-    pagination.page = 1
+    pagination.current = 1
     fetchData()
   }
 
   const handleReset = () => {
-    searchForm.name = ''
-    searchForm.type = ''
-    searchForm.status = ''
-    handleSearch()
+    searchForm.value = { name: undefined }
+    pagination.current = 1
+    fetchData()
+  }
+
+  const handleSizeChange = (size: number) => {
+    pagination.size = size
+    pagination.current = 1
+    fetchData()
+  }
+
+  const handleCurrentChange = (current: number) => {
+    pagination.current = current
+    fetchData()
+  }
+
+  const resetFormData = () => {
+    Object.assign(formData, {
+      name: '',
+      shortName: '',
+      creditCode: '',
+      taxpayerScale: '',
+      admissionCode: '',
+      admissionStatus: 'enabled',
+      contactPerson: '',
+      contactPhone: ''
+    })
   }
 
   const handleAdd = () => {
+    currentEditId.value = null
     dialogTitle.value = '新增企业'
-    Object.assign(formData, {
-      id: undefined,
-      name: '',
-      type: '',
-      creditCode: '',
-      legalPerson: '',
-      contact: '',
-      qualification: '',
-      qualExpiry: ''
-    })
+    resetFormData()
     dialogVisible.value = true
   }
 
   const handleEdit = (row: CompanyItem) => {
+    currentEditId.value = row.id
     dialogTitle.value = '编辑企业'
-    Object.assign(formData, { ...row })
+    Object.assign(formData, row)
     dialogVisible.value = true
   }
 
@@ -317,11 +413,20 @@
   }
 
   const handleDelete = (row: CompanyItem) => {
-    ElMessageBox.confirm(`确定要删除企业「${row.name}」吗？`, '提示', {
+    ElMessageBox.confirm(`确定要删除企业“${row.name}”吗？`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     }).then(() => {
+      mockData.value = mockData.value.filter((item) => item.id !== row.id)
+
+      if (
+        pagination.current > 1 &&
+        (pagination.current - 1) * pagination.size >= mockData.value.length
+      ) {
+        pagination.current -= 1
+      }
+
       ElMessage.success('删除成功')
       fetchData()
     })
@@ -329,16 +434,39 @@
 
   const handleSubmit = async () => {
     if (!formRef.value) return
-    await formRef.value.validate((valid) => {
-      if (!valid) return
-      submitting.value = true
-      setTimeout(() => {
-        ElMessage.success(dialogTitle.value === '新增企业' ? '新增成功' : '编辑成功')
-        dialogVisible.value = false
-        submitting.value = false
-        fetchData()
-      }, 500)
-    })
+
+    const valid = await formRef.value.validate().catch(() => false)
+    if (!valid) return
+
+    submitting.value = true
+
+    window.setTimeout(() => {
+      const payload = {
+        id: currentEditId.value ?? Date.now(),
+        name: formData.name || '',
+        shortName: formData.shortName || '',
+        creditCode: formData.creditCode || '',
+        taxpayerScale: formData.taxpayerScale || '',
+        admissionCode: formData.admissionCode || '',
+        admissionStatus: formData.admissionStatus || 'enabled',
+        contactPerson: formData.contactPerson || '',
+        contactPhone: formData.contactPhone || ''
+      }
+
+      if (currentEditId.value == null) {
+        mockData.value.unshift(payload)
+      } else {
+        const index = mockData.value.findIndex((item) => item.id === currentEditId.value)
+        if (index !== -1) {
+          mockData.value[index] = payload
+        }
+      }
+
+      dialogVisible.value = false
+      submitting.value = false
+      ElMessage.success(currentEditId.value == null ? '新增成功' : '编辑成功')
+      fetchData()
+    }, 300)
   }
 
   onMounted(() => {

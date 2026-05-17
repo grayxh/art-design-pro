@@ -40,6 +40,16 @@ export const dashboardRoutes: AppRouteRecord = {
         icon: 'ri:bar-chart-box-line',
         keepAlive: false
       }
+    },
+    {
+      path: 'todo',
+      name: 'DashboardTodo',
+      component: '/dashboard/todo',
+      meta: {
+        title: 'menus.dashboard.todo',
+        icon: 'ri:task-line',
+        keepAlive: false
+      }
     }
   ]
 }

@@ -225,7 +225,8 @@
       "title": "Dashboard",
       "console": "Console",
       "analysis": "Analysis",
-      "ecommerce": "Ecommerce"
+      "ecommerce": "Ecommerce",
+      "todo": "Todo"
     },
     "widgets": {
       "title": "Components",
