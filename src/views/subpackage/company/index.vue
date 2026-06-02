@@ -72,17 +72,32 @@
         <ElRow :gutter="16">
           <ElCol :span="12">
             <ElFormItem label="企业名称" prop="name">
-              <ElInput v-model="formData.name" placeholder="请输入企业名称" clearable />
+              <ElInput
+                v-model="formData.name"
+                placeholder="请输入企业名称"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
             <ElFormItem label="简称" prop="shortName">
-              <ElInput v-model="formData.shortName" placeholder="请输入企业简称" clearable />
+              <ElInput
+                v-model="formData.shortName"
+                placeholder="请输入企业简称"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
             <ElFormItem label="统一信用代码" prop="creditCode">
-              <ElInput v-model="formData.creditCode" placeholder="请输入统一信用代码" clearable />
+              <ElInput
+                v-model="formData.creditCode"
+                placeholder="请输入统一信用代码"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
@@ -91,6 +106,7 @@
                 v-model="formData.taxpayerScale"
                 placeholder="请选择纳税人规模"
                 class="w-full"
+                :disabled="dialogMode === 'detail'"
               >
                 <ElOption label="一般纳税人" value="一般纳税人" />
                 <ElOption label="小规模纳税人" value="小规模纳税人" />
@@ -99,7 +115,12 @@
           </ElCol>
           <ElCol :span="12">
             <ElFormItem label="准入号" prop="admissionCode">
-              <ElInput v-model="formData.admissionCode" placeholder="请输入准入号" clearable />
+              <ElInput
+                v-model="formData.admissionCode"
+                placeholder="请输入准入号"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
@@ -108,6 +129,7 @@
                 v-model="formData.admissionStatus"
                 placeholder="请选择准入状态"
                 class="w-full"
+                :disabled="dialogMode === 'detail'"
               >
                 <ElOption
                   v-for="item in admissionStatusOptions"
@@ -120,19 +142,38 @@
           </ElCol>
           <ElCol :span="12">
             <ElFormItem label="联系人" prop="contactPerson">
-              <ElInput v-model="formData.contactPerson" placeholder="请输入联系人" clearable />
+              <ElInput
+                v-model="formData.contactPerson"
+                placeholder="请输入联系人"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
           <ElCol :span="12">
             <ElFormItem label="联系电话" prop="contactPhone">
-              <ElInput v-model="formData.contactPhone" placeholder="请输入联系电话" clearable />
+              <ElInput
+                v-model="formData.contactPhone"
+                placeholder="请输入联系电话"
+                clearable
+                :disabled="dialogMode === 'detail'"
+              />
             </ElFormItem>
           </ElCol>
         </ElRow>
       </ElForm>
       <template #footer>
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="submitting" @click="handleSubmit">确定</ElButton>
+        <ElButton @click="dialogVisible = false">{{
+          dialogMode === 'detail' ? '关闭' : '取消'
+        }}</ElButton>
+        <ElButton
+          v-if="dialogMode !== 'detail'"
+          type="primary"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
+          确定
+        </ElButton>
       </template>
     </ElDialog>
   </div>
@@ -145,20 +186,18 @@
   import { Plus } from '@element-plus/icons-vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
+  import {
+    fetchAddCompany,
+    fetchDeleteCompany,
+    fetchEditCompany,
+    fetchGetCompanyList
+  } from '@/api/company'
 
   defineOptions({ name: 'SubpackageCompany' })
 
-  interface CompanyItem {
-    id: number
-    name: string
-    shortName: string
-    creditCode: string
-    taxpayerScale: string
-    admissionCode: string
-    admissionStatus: string
-    contactPerson: string
-    contactPhone: string
-  }
+  type CompanyItem = Api.SystemManage.CompanyListItem
+  type CompanySubmitParams = Api.SystemManage.CompanySubmitParams
+  type DialogMode = 'add' | 'edit' | 'detail'
 
   const admissionStatusMap: Record<
     string,
@@ -180,6 +219,7 @@
   const submitting = ref(false)
   const dialogVisible = ref(false)
   const dialogTitle = ref('新增企业')
+  const dialogMode = ref<DialogMode>('add')
   const formRef = ref<FormInstance>()
   const currentEditId = ref<number | null>(null)
 
@@ -222,64 +262,6 @@
     contactPerson: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
     contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
   }
-
-  const mockData = ref<CompanyItem[]>([
-    {
-      id: 1,
-      name: '鑫盛建筑劳务有限公司',
-      shortName: '鑫盛劳务',
-      creditCode: '91310000MA1FL5XX3X',
-      taxpayerScale: '一般纳税人',
-      admissionCode: 'ZR20240001',
-      admissionStatus: 'enabled',
-      contactPerson: '张建国',
-      contactPhone: '13800001001'
-    },
-    {
-      id: 2,
-      name: '宏远钢结构工程有限公司',
-      shortName: '宏远钢构',
-      creditCode: '91310000MA1GH7YY4Z',
-      taxpayerScale: '一般纳税人',
-      admissionCode: 'ZR20240002',
-      admissionStatus: 'enabled',
-      contactPerson: '李明',
-      contactPhone: '13900002002'
-    },
-    {
-      id: 3,
-      name: '华通机电工程有限公司',
-      shortName: '华通机电',
-      creditCode: '91310000MA1KJ9WW5A',
-      taxpayerScale: '小规模纳税人',
-      admissionCode: 'ZR20240003',
-      admissionStatus: 'pending',
-      contactPerson: '王芳',
-      contactPhone: '13700003003'
-    },
-    {
-      id: 4,
-      name: '恒泰建材供应链有限公司',
-      shortName: '恒泰建材',
-      creditCode: '91310000MA1NP2VV6B',
-      taxpayerScale: '一般纳税人',
-      admissionCode: 'ZR20240004',
-      admissionStatus: 'disabled',
-      contactPerson: '刘伟',
-      contactPhone: '13600004004'
-    },
-    {
-      id: 5,
-      name: '美家装饰劳务有限公司',
-      shortName: '美家装饰',
-      creditCode: '91310000MA1QR4UU7C',
-      taxpayerScale: '小规模纳税人',
-      admissionCode: 'ZR20240005',
-      admissionStatus: 'enabled',
-      contactPerson: '陈晓',
-      contactPhone: '13500005005'
-    }
-  ])
 
   const { columns, columnChecks } = useTableColumns<CompanyItem>(
     () =>
@@ -342,21 +324,47 @@
       ] as ColumnOption<CompanyItem>[]
   )
 
-  const fetchData = () => {
+  const getSubmitPayload = (): CompanySubmitParams => ({
+    name: formData.name || '',
+    shortName: formData.shortName || '',
+    creditCode: formData.creditCode || '',
+    taxpayerScale: formData.taxpayerScale || '',
+    admissionCode: formData.admissionCode || '',
+    admissionStatus: (formData.admissionStatus || 'enabled') as CompanyItem['admissionStatus'],
+    contactPerson: formData.contactPerson || '',
+    contactPhone: formData.contactPhone || ''
+  })
+
+  const resetFormData = () => {
+    Object.assign(formData, {
+      name: '',
+      shortName: '',
+      creditCode: '',
+      taxpayerScale: '',
+      admissionCode: '',
+      admissionStatus: 'enabled',
+      contactPerson: '',
+      contactPhone: ''
+    })
+  }
+
+  const fetchData = async () => {
     loading.value = true
 
-    window.setTimeout(() => {
-      const keyword = searchForm.value.name?.trim()
-      const filtered = mockData.value.filter((item) => {
-        return !keyword || item.name.includes(keyword)
+    try {
+      const data = await fetchGetCompanyList({
+        current: pagination.current,
+        size: pagination.size,
+        name: searchForm.value.name?.trim()
       })
 
-      pagination.total = filtered.length
-
-      const start = (pagination.current - 1) * pagination.size
-      tableData.value = filtered.slice(start, start + pagination.size)
+      tableData.value = data.records || []
+      pagination.total = data.total || 0
+      pagination.current = data.current || pagination.current
+      pagination.size = data.size || pagination.size
+    } finally {
       loading.value = false
-    }, 200)
+    }
   }
 
   const handleSearch = () => {
@@ -381,20 +389,8 @@
     fetchData()
   }
 
-  const resetFormData = () => {
-    Object.assign(formData, {
-      name: '',
-      shortName: '',
-      creditCode: '',
-      taxpayerScale: '',
-      admissionCode: '',
-      admissionStatus: 'enabled',
-      contactPerson: '',
-      contactPhone: ''
-    })
-  }
-
   const handleAdd = () => {
+    dialogMode.value = 'add'
     currentEditId.value = null
     dialogTitle.value = '新增企业'
     resetFormData()
@@ -402,6 +398,7 @@
   }
 
   const handleEdit = (row: CompanyItem) => {
+    dialogMode.value = 'edit'
     currentEditId.value = row.id
     dialogTitle.value = '编辑企业'
     Object.assign(formData, row)
@@ -409,7 +406,11 @@
   }
 
   const handleDetail = (row: CompanyItem) => {
-    ElMessage.info(`查看企业：${row.name}`)
+    dialogMode.value = 'detail'
+    currentEditId.value = row.id
+    dialogTitle.value = '企业详情'
+    Object.assign(formData, row)
+    dialogVisible.value = true
   }
 
   const handleDelete = (row: CompanyItem) => {
@@ -417,17 +418,13 @@
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
-    }).then(() => {
-      mockData.value = mockData.value.filter((item) => item.id !== row.id)
+    }).then(async () => {
+      await fetchDeleteCompany(row.id)
 
-      if (
-        pagination.current > 1 &&
-        (pagination.current - 1) * pagination.size >= mockData.value.length
-      ) {
+      if (pagination.current > 1 && tableData.value.length === 1) {
         pagination.current -= 1
       }
 
-      ElMessage.success('删除成功')
       fetchData()
     })
   }
@@ -440,33 +437,20 @@
 
     submitting.value = true
 
-    window.setTimeout(() => {
-      const payload = {
-        id: currentEditId.value ?? Date.now(),
-        name: formData.name || '',
-        shortName: formData.shortName || '',
-        creditCode: formData.creditCode || '',
-        taxpayerScale: formData.taxpayerScale || '',
-        admissionCode: formData.admissionCode || '',
-        admissionStatus: formData.admissionStatus || 'enabled',
-        contactPerson: formData.contactPerson || '',
-        contactPhone: formData.contactPhone || ''
-      }
+    try {
+      const payload = getSubmitPayload()
 
-      if (currentEditId.value == null) {
-        mockData.value.unshift(payload)
-      } else {
-        const index = mockData.value.findIndex((item) => item.id === currentEditId.value)
-        if (index !== -1) {
-          mockData.value[index] = payload
-        }
+      if (dialogMode.value === 'add') {
+        await fetchAddCompany(payload)
+      } else if (dialogMode.value === 'edit' && currentEditId.value != null) {
+        await fetchEditCompany(currentEditId.value, payload)
       }
 
       dialogVisible.value = false
-      submitting.value = false
-      ElMessage.success(currentEditId.value == null ? '新增成功' : '编辑成功')
       fetchData()
-    }, 300)
+    } finally {
+      submitting.value = false
+    }
   }
 
   onMounted(() => {

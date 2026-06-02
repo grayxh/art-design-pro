@@ -311,7 +311,9 @@
       "title": "分包管理",
       "list": "分包列表",
       "company": "企业管理",
-      "personnel": "人员管理"
+      "personnel": "人员管理",
+      "settings": "系统设置",
+      "dict": "字典管理"
     },
     "plan": {
       "title": "版本计划",

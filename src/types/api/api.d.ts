@@ -134,5 +134,105 @@ declare namespace Api {
           endTime: string | null
         }
     >
+
+    /** 企业列表 */
+    type CompanyList = Api.Common.PaginatedResponse<CompanyListItem>
+
+    /** 企业列表项 */
+    interface CompanyListItem {
+      id: number
+      name: string
+      shortName: string
+      creditCode: string
+      taxpayerScale: string
+      admissionCode: string
+      admissionStatus: 'enabled' | 'pending' | 'disabled'
+      contactPerson: string
+      contactPhone: string
+    }
+
+    /** 企业搜索参数 */
+    type CompanySearchParams = Partial<
+      Pick<CompanyListItem, 'name'> & Api.Common.CommonSearchParams
+    >
+
+    /** 企业提交参数 */
+    type CompanySubmitParams = Omit<CompanyListItem, 'id'>
+
+    /** 证件类型字典列表 */
+    type CertificateTypeDictList = Api.Common.PaginatedResponse<CertificateTypeDictItem>
+
+    /** 证件类型字典项 */
+    interface CertificateTypeDictItem {
+      id: number
+      typeName: string
+      targetType: 'person' | 'company'
+      category: 'id_card' | 'qualification' | 'license' | 'others' | 'certificate'
+      formTemplate: {
+        fields?: Array<{
+          label: string
+          name: string
+          type: string
+          required?: boolean
+          placeholder?: string
+          options?: Array<{
+            label: string
+            value: string
+          }>
+        }>
+      } | null
+      icon: string | null
+      sortOrder: number
+      status: 0 | 1
+      remark: string | null
+      createdBy?: number | null
+      createdAt?: string
+      updatedBy?: number | null
+      updatedAt?: string
+    }
+
+    /** 证件类型字典搜索参数 */
+    type CertificateTypeDictSearchParams = Partial<
+      Pick<CertificateTypeDictItem, 'typeName' | 'targetType' | 'category' | 'status'> &
+        Api.Common.CommonSearchParams
+    >
+
+    /** 证件类型字典提交参数 */
+    type CertificateTypeDictSubmitParams = Omit<
+      CertificateTypeDictItem,
+      'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
+    >
+    /** 绯荤粺绠€鍗曞瓧鍏稿垪琛?*/
+    type SysDictList = Api.Common.PaginatedResponse<SysDictItem>
+
+    /** 绯荤粺绠€鍗曞瓧鍏搁」 */
+    interface SysDictItem {
+      id: number
+      dictType: string
+      dictKey: string
+      dictValue: string
+      sortOrder: number
+      parentId: number
+      color: string | null
+      tagType: 'success' | 'warning' | 'danger' | 'info' | 'primary' | null
+      status: 0 | 1
+      remark: string | null
+      createdBy?: number | null
+      createdAt?: string
+      updatedBy?: number | null
+      updatedAt?: string
+    }
+
+    /** 绯荤粺绠€鍗曞瓧鍏告悳绱㈠弬鏁?*/
+    type SysDictSearchParams = Partial<
+      Pick<SysDictItem, 'dictType' | 'dictKey' | 'dictValue' | 'status'> &
+        Api.Common.CommonSearchParams
+    >
+
+    /** 绯荤粺绠€鍗曞瓧鍏告彁浜ゅ弬鏁?*/
+    type SysDictSubmitParams = Omit<
+      SysDictItem,
+      'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
+    >
   }
 }

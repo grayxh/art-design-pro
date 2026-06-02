@@ -39,6 +39,28 @@ export const subpackageRoutes: AppRouteRecord = {
         icon: 'ri:group-line',
         keepAlive: true
       }
+    },
+    {
+      path: 'settings',
+      name: 'SubpackageSettings',
+      component: '',
+      meta: {
+        title: 'menus.subpackage.settings',
+        icon: 'ri:settings-3-line',
+        keepAlive: true
+      },
+      children: [
+        {
+          path: 'dict',
+          name: 'SubpackageDict',
+          component: '/subpackage/settings/dict',
+          meta: {
+            title: 'menus.subpackage.dict',
+            icon: 'ri:book-2-line',
+            keepAlive: true
+          }
+        }
+      ]
     }
   ]
 }

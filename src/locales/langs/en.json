@@ -311,7 +311,9 @@
       "title": "Subpackage",
       "list": "Subpackage List",
       "company": "Company",
-      "personnel": "Personnel"
+      "personnel": "Personnel",
+      "settings": "System Settings",
+      "dict": "Dictionary Management"
     },
     "plan": {
       "title": "Version Plan",
