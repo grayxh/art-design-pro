@@ -313,7 +313,8 @@
       "company": "企业管理",
       "personnel": "人员管理",
       "settings": "系统设置",
-      "dict": "字典管理"
+      "dict": "字典管理",
+      "file": "文件管理"
     },
     "plan": {
       "title": "版本计划",

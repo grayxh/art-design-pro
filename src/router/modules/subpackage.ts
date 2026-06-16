@@ -59,6 +59,16 @@ export const subpackageRoutes: AppRouteRecord = {
             icon: 'ri:book-2-line',
             keepAlive: true
           }
+        },
+        {
+          path: 'file',
+          name: 'SubpackageFile',
+          component: '/subpackage/settings/file',
+          meta: {
+            title: 'menus.subpackage.file',
+            icon: 'ri:file-list-3-line',
+            keepAlive: true
+          }
         }
       ]
     }

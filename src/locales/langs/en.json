@@ -313,7 +313,8 @@
       "company": "Company",
       "personnel": "Personnel",
       "settings": "System Settings",
-      "dict": "Dictionary Management"
+      "dict": "Dictionary Management",
+      "file": "File Management"
     },
     "plan": {
       "title": "Version Plan",

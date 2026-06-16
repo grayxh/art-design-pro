@@ -159,49 +159,115 @@ declare namespace Api {
     /** 企业提交参数 */
     type CompanySubmitParams = Omit<CompanyListItem, 'id'>
 
-    /** 证件类型字典列表 */
-    type CertificateTypeDictList = Api.Common.PaginatedResponse<CertificateTypeDictItem>
+    /** 人员列表 */
+    type PersonList = Api.Common.PaginatedResponse<PersonListItem>
 
-    /** 证件类型字典项 */
-    interface CertificateTypeDictItem {
+    /** 人员联系方式 */
+    interface PersonContactItem {
       id: number
-      typeName: string
-      targetType: 'person' | 'company'
-      category: 'id_card' | 'qualification' | 'license' | 'others' | 'certificate'
-      formTemplate: {
-        fields?: Array<{
-          label: string
-          name: string
-          type: string
-          required?: boolean
-          placeholder?: string
-          options?: Array<{
-            label: string
-            value: string
-          }>
-        }>
-      } | null
-      icon: string | null
-      sortOrder: number
+      contactType: string
+      contactValue: string
+    }
+
+    /** 人员提交联系方式 */
+    interface PersonContactSubmitItem {
+      id?: number
+      contactType: string
+      contactValue: string
+      isPrimary?: 0 | 1
+      status?: 0 | 1
+      remark?: string | null
+    }
+
+    /** 人员提交证件 */
+    interface PersonCertificateSubmitItem {
+      id?: number
+      certificateTypeId: number
+      certificateTypeName: string
+      certNumber: string | null
+      issueDate: string | null
+      expiryDate: string | null
+      issuingAuthority: string | null
+      dynamicFields: Record<string, any> | null
+      fileIds: number[]
+    }
+
+    /** 人员列表项 */
+    interface PersonListItem {
+      id: number
+      name: string
+      idNumber: string | null
+      gender: '男' | '女' | null
+      nation: string | null
+      birthDate: string | null
+      address: string | null
+      remark: string | null
+      contacts: PersonContactItem[]
+    }
+
+    /** 人员搜索参数 */
+    type PersonSearchParams = Partial<
+      Pick<PersonListItem, 'name' | 'idNumber' | 'gender'> &
+        Api.Common.CommonSearchParams & {
+          phone: string
+          email: string
+        }
+    >
+
+    /** 人员提交参数 */
+    interface PersonSubmitParams {
+      name: string
+      idNumber: string | null
+      gender: '男' | '女' | null
+      nation: string | null
+      birthDate: string | null
+      address: string | null
+      remark: string | null
+      contacts: PersonContactSubmitItem[]
+      certificates: PersonCertificateSubmitItem[]
+    }
+
+    /** 文件列表 */
+    type FileList = Api.Common.PaginatedResponse<FileListItem>
+
+    /** 文件列表项 */
+    interface FileListItem {
+      id: number
+      thumbnailId: number | null
+      storageType: string
+      path: string
+      bucketName: string | null
+      name: string
+      size: number
+      md5: string
+      contentType: string | null
+      ext: string | null
+      source: string | null
+      purpose: string | null
+      thumbnail: 0 | 1
+      ocrText: string | null
+      ocrStatus: 0 | 1 | 2 | 3
       status: 0 | 1
       remark: string | null
       createdBy?: number | null
       createdAt?: string
       updatedBy?: number | null
       updatedAt?: string
+      previewUrl?: string | null
+      thumbnailFile?: {
+        id: number
+        path: string
+        name: string
+        previewUrl?: string | null
+      } | null
     }
 
-    /** 证件类型字典搜索参数 */
-    type CertificateTypeDictSearchParams = Partial<
-      Pick<CertificateTypeDictItem, 'typeName' | 'targetType' | 'category' | 'status'> &
+    /** 文件搜索参数 */
+    type FileSearchParams = Partial<
+      Pick<FileListItem, 'name' | 'storageType' | 'source' | 'purpose' | 'status' | 'thumbnail'> &
         Api.Common.CommonSearchParams
     >
 
-    /** 证件类型字典提交参数 */
-    type CertificateTypeDictSubmitParams = Omit<
-      CertificateTypeDictItem,
-      'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
-    >
     /** 绯荤粺绠€鍗曞瓧鍏稿垪琛?*/
     type SysDictList = Api.Common.PaginatedResponse<SysDictItem>
 
@@ -233,6 +299,86 @@ declare namespace Api {
     type SysDictSubmitParams = Omit<
       SysDictItem,
       'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
+    >
+
+    type DictTypeList = DictTypeItem[]
+
+    interface DictTypeItem {
+      id: number
+      typeCode: string
+      typeName: string
+      formTemplate: {
+        fields?: Array<{
+          label: string
+          name: string
+          type: string
+          required?: boolean
+          placeholder?: string
+          options?: Array<{
+            label: string
+            value: string
+          }>
+        }>
+      } | null
+      sortOrder: number
+      status: 0 | 1
+      remark: string | null
+      itemCount?: number
+      createdBy?: number | null
+      createdAt?: string
+      updatedBy?: number | null
+      updatedAt?: string
+    }
+
+    type DictTypeSearchParams = Partial<Pick<DictTypeItem, 'typeCode' | 'typeName' | 'status'>>
+
+    type DictTypeSubmitParams = Omit<
+      DictTypeItem,
+      'id' | 'itemCount' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
+    >
+
+    type DictItemList = Api.Common.PaginatedResponse<DictItemItem>
+
+    interface DictItemItem {
+      id: number
+      typeId: number
+      typeCode?: string
+      typeName?: string
+      dictKey: string
+      dictValue: string
+      sortOrder: number
+      parentId: number
+      color: string | null
+      tagType: 'success' | 'warning' | 'danger' | 'info' | 'primary' | null
+      formTemplate: {
+        fields?: Array<{
+          label: string
+          name: string
+          type: string
+          required?: boolean
+          placeholder?: string
+          options?: Array<{
+            label: string
+            value: string
+          }>
+        }>
+      } | null
+      status: 0 | 1
+      remark: string | null
+      createdBy?: number | null
+      createdAt?: string
+      updatedBy?: number | null
+      updatedAt?: string
+    }
+
+    type DictItemSearchParams = Partial<
+      Pick<DictItemItem, 'typeId' | 'dictKey' | 'dictValue' | 'status'> &
+        Api.Common.CommonSearchParams
+    >
+
+    type DictItemSubmitParams = Omit<
+      DictItemItem,
+      'id' | 'typeCode' | 'typeName' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
     >
   }
 }
