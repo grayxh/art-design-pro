@@ -174,7 +174,7 @@ declare namespace Api {
       id?: number
       contactType: string
       contactValue: string
-      isPrimary?: 0 | 1
+      primary?: 0 | 1
       status?: 0 | 1
       remark?: string | null
     }

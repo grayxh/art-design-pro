@@ -26,7 +26,9 @@ export function fetchUploadFile(file: File, businessType = 'general', purpose = 
   formData.append('businessType', businessType)
   formData.append('purpose', purpose)
 
-  return request.post<{ id: number }>({
+  return request.post<
+    Pick<Api.SystemManage.FileListItem, 'id' | 'name' | 'path' | 'contentType' | 'ext' | 'size'>
+  >({
     url: '/api/file/upload',
     data: formData,
     showSuccessMessage: true

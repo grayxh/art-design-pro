@@ -740,6 +740,7 @@
     parentId: 0,
     color: null,
     tagType: null,
+    formTemplate: null,
     status: 1,
     remark: null
   })

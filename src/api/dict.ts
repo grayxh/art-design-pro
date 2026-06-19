@@ -114,3 +114,9 @@ export function fetchGetCertificateTypeList(params?: { targetType?: string; stat
     params
   })
 }
+
+export function fetchGetDictItemsByTypeCode(typeCode: string) {
+  return request.get<Api.SystemManage.DictItemItem[]>({
+    url: `/api/dict/type/code/${typeCode}`
+  })
+}
