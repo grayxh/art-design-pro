@@ -69,22 +69,40 @@
       v-model="dialogVisible"
       :title="dialogTitle"
       width="1200px"
-      class="personnel-dialog"
+      :class="['personnel-dialog', { 'personnel-dialog-view': isViewMode }]"
       :close-on-click-modal="false"
+      :show-close="!submitting"
       destroy-on-close
     >
-      <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="78px">
+      <ElForm
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="78px"
+        :hide-required-asterisk="isViewMode"
+      >
         <div class="form-section">
           <div class="section-title">基本信息</div>
           <ElRow :gutter="10">
             <ElCol :span="7">
               <ElFormItem label="姓名" prop="name">
-                <ElInput v-model="formData.name" placeholder="请输入姓名" clearable />
+                <ElInput
+                  v-model="formData.name"
+                  placeholder="请输入姓名"
+                  clearable
+                  :disabled="isViewMode"
+                />
               </ElFormItem>
             </ElCol>
             <ElCol :span="4">
               <ElFormItem label="性别" prop="gender">
-                <ElSelect v-model="formGender" placeholder="请选择性别" class="w-full" clearable>
+                <ElSelect
+                  v-model="formGender"
+                  placeholder="请选择性别"
+                  class="w-full"
+                  clearable
+                  :disabled="isViewMode"
+                >
                   <ElOption
                     v-for="item in genderOptions"
                     :key="item.value"
@@ -107,6 +125,7 @@
                   value-format="YYYY-MM-DD"
                   placeholder="请选择出生日期"
                   class="w-full"
+                  :disabled="isViewMode"
                 />
               </ElFormItem>
             </ElCol>
@@ -118,6 +137,7 @@
                   class="w-full"
                   filterable
                   clearable
+                  :disabled="isViewMode"
                 >
                   <ElOption v-for="item in nationOptions" :key="item" :label="item" :value="item" />
                 </ElSelect>
@@ -129,13 +149,19 @@
                   v-model="formData.idNumber"
                   placeholder="请输入身份证号"
                   clearable
+                  :disabled="isViewMode"
                   @blur="handleIdNumberBlur"
                 />
               </ElFormItem>
             </ElCol>
             <ElCol :span="10">
               <ElFormItem label="住址" prop="address">
-                <ElInput v-model="formData.address" placeholder="请输入住址" clearable />
+                <ElInput
+                  v-model="formData.address"
+                  placeholder="请输入住址"
+                  clearable
+                  :disabled="isViewMode"
+                />
               </ElFormItem>
             </ElCol>
             <ElCol :span="24">
@@ -145,6 +171,7 @@
                   type="textarea"
                   :rows="2"
                   placeholder="请输入备注"
+                  :disabled="isViewMode"
                 />
               </ElFormItem>
             </ElCol>
@@ -162,7 +189,12 @@
                   :prop="`contacts.${index}.contactType`"
                   :rules="[{ required: true, message: '请选择联系方式类型', trigger: 'change' }]"
                 >
-                  <ElSelect v-model="contact.contactType" placeholder="请选择类型" class="w-full">
+                  <ElSelect
+                    v-model="contact.contactType"
+                    placeholder="请选择类型"
+                    class="w-full"
+                    :disabled="isViewMode"
+                  >
                     <ElOption
                       v-for="item in contactTypeOptions"
                       :key="item.value"
@@ -179,20 +211,26 @@
                   :prop="`contacts.${index}.contactValue`"
                   :rules="[{ required: true, message: '请输入联系方式', trigger: 'blur' }]"
                 >
-                  <ElInput v-model="contact.contactValue" placeholder="请输入联系方式" clearable />
+                  <ElInput
+                    v-model="contact.contactValue"
+                    placeholder="请输入联系方式"
+                    clearable
+                    :disabled="isViewMode"
+                  />
                 </ElFormItem>
               </ElCol>
               <ElCol :span="3">
                 <ElFormItem class="compact-form-item" label="主要">
                   <ElSwitch
                     :model-value="contact.primary === 1"
+                    :disabled="isViewMode"
                     @change="(value) => handlePrimaryContactChange(index, Boolean(value))"
                   />
                 </ElFormItem>
               </ElCol>
               <ElCol :span="4">
                 <ElFormItem class="compact-form-item" label="状态">
-                  <ElSelect v-model="contact.status" class="w-full">
+                  <ElSelect v-model="contact.status" class="w-full" :disabled="isViewMode">
                     <ElOption label="有效" :value="1" />
                     <ElOption label="无效" :value="0" />
                   </ElSelect>
@@ -200,17 +238,28 @@
               </ElCol>
               <ElCol :span="4">
                 <ElFormItem class="compact-form-item" label="备注">
-                  <ElInput v-model="contact.remark" placeholder="请输入备注" clearable />
+                  <ElInput
+                    v-model="contact.remark"
+                    placeholder="请输入备注"
+                    clearable
+                    :disabled="isViewMode"
+                  />
                 </ElFormItem>
               </ElCol>
               <ElCol :span="2" class="contact-action-col">
-                <ElButton v-if="index > 0" type="danger" link @click="handleRemoveContact(index)">
+                <ElButton
+                  v-if="index > 0 && !isViewMode"
+                  type="danger"
+                  link
+                  @click="handleRemoveContact(index)"
+                >
                   删除
                 </ElButton>
               </ElCol>
             </ElRow>
           </div>
           <ElButton
+            v-if="!isViewMode"
             type="primary"
             plain
             size="small"
@@ -240,7 +289,12 @@
           >
             <div class="dynamic-card-header">
               <div class="dynamic-card-index">证件 {{ index + 1 }}</div>
-              <ElButton v-if="index > 0" type="danger" link @click="handleRemoveCertificate(index)">
+              <ElButton
+                v-if="index > 0 && !isViewMode"
+                type="danger"
+                link
+                @click="handleRemoveCertificate(index)"
+              >
                 删除
               </ElButton>
             </div>
@@ -251,7 +305,13 @@
                   :prop="`certificates.${index}.certificateTypeId`"
                   :rules="[{ required: true, message: '请选择证件类型', trigger: 'change' }]"
                 >
+                  <ElInput
+                    v-if="isViewMode"
+                    :model-value="certificate.certificateTypeName || '-'"
+                    disabled
+                  />
                   <ElSelect
+                    v-else
                     :model-value="certificate.certificateTypeId || undefined"
                     placeholder="请选择证件类型"
                     class="w-full"
@@ -269,23 +329,19 @@
                   </ElSelect>
                 </ElFormItem>
               </ElCol>
-              <ElCol :span="6">
-                <ElFormItem label="证件名称">
-                  <ElInput :model-value="certificate.certificateTypeName || '-'" disabled />
-                </ElFormItem>
-              </ElCol>
-              <ElCol :span="7">
+              <ElCol :span="8">
                 <ElFormItem label="证书编号">
                   <ElInput
                     v-model="certificate.certNumber"
                     placeholder="请输入证书编号"
                     clearable
+                    :disabled="isViewMode"
                   />
                 </ElFormItem>
               </ElCol>
-              <ElCol :span="4">
+              <ElCol :span="5">
                 <ElFormItem label="状态">
-                  <ElSelect v-model="certificate.status" class="w-full">
+                  <ElSelect v-model="certificate.status" class="w-full" :disabled="isViewMode">
                     <ElOption label="有效" :value="1" />
                     <ElOption label="无效" :value="0" />
                     <ElOption label="已过期" :value="2" />
@@ -298,6 +354,7 @@
                     v-model="certificate.issuingAuthority"
                     placeholder="请输入发证机关"
                     clearable
+                    :disabled="isViewMode"
                   />
                 </ElFormItem>
               </ElCol>
@@ -309,6 +366,7 @@
                     value-format="YYYY-MM-DD"
                     placeholder="请选择发证日期"
                     class="w-full"
+                    :disabled="isViewMode"
                   />
                 </ElFormItem>
               </ElCol>
@@ -320,12 +378,18 @@
                     value-format="YYYY-MM-DD"
                     placeholder="请选择失效日期"
                     class="w-full"
+                    :disabled="isViewMode"
                   />
                 </ElFormItem>
               </ElCol>
               <ElCol :span="6">
                 <ElFormItem label="备注">
-                  <ElInput v-model="certificate.remark" placeholder="请输入备注" clearable />
+                  <ElInput
+                    v-model="certificate.remark"
+                    placeholder="请输入备注"
+                    clearable
+                    :disabled="isViewMode"
+                  />
                 </ElFormItem>
               </ElCol>
             </ElRow>
@@ -344,6 +408,7 @@
                     :placeholder="field.placeholder || `请选择${field.label}`"
                     class="w-full"
                     clearable
+                    :disabled="isViewMode"
                     @change="(value) => setDynamicFieldValue(certificate, field.name, value)"
                   >
                     <ElOption
@@ -358,6 +423,7 @@
                     :model-value="getDynamicFieldValue(certificate, field.name)"
                     :placeholder="field.placeholder || `请输入${field.label}`"
                     clearable
+                    :disabled="isViewMode"
                     @input="(value) => setDynamicFieldValue(certificate, field.name, value)"
                   />
                 </ElFormItem>
@@ -368,6 +434,7 @@
             <div class="sub-section-title">附件上传</div>
             <div class="upload-area upload-area-inline">
               <ElUpload
+                v-if="!isViewMode"
                 multiple
                 :auto-upload="false"
                 :show-file-list="false"
@@ -394,6 +461,7 @@
                   <ElButton
                     type="danger"
                     link
+                    v-if="!isViewMode"
                     @click="handleRemoveUploadedFile(index, fileItem.id)"
                   >
                     删除
@@ -404,6 +472,7 @@
             </div>
           </div>
           <ElButton
+            v-if="!isViewMode"
             type="primary"
             plain
             size="small"
@@ -419,8 +488,10 @@
       </ElForm>
 
       <template #footer>
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="submitting" @click="handleSubmit">确定</ElButton>
+        <ElButton @click="dialogVisible = false">{{ isViewMode ? '关闭' : '取消' }}</ElButton>
+        <ElButton v-if="!isViewMode" type="primary" :loading="submitting" @click="handleSubmit"
+          >确定</ElButton
+        >
       </template>
     </ElDialog>
   </div>
@@ -439,6 +510,7 @@
   import {
     fetchAddPerson,
     fetchDeletePerson,
+    fetchEditPerson,
     fetchGetPersonDetail,
     fetchGetPersonList
   } from '@/api/person'
@@ -455,12 +527,7 @@
   type TemplateFieldDef = NonNullable<NonNullable<DictItemItem['formTemplate']>['fields']>[number]
 
   type PersonDetailResponse = PersonItem & {
-    certificates?: Array<
-      PersonCertificateSubmitItem & {
-        status?: 0 | 1 | 2
-        remark?: string | null
-      }
-    >
+    certificates?: PersonCertificateSubmitItem[]
   }
 
   type UploadedFileItem = Pick<
@@ -480,6 +547,8 @@
     fileList: UploadedFileItem[]
     uploading: boolean
   }
+
+  type DialogMode = 'add' | 'edit' | 'view'
 
   const nationOptions = [
     '汉族',
@@ -556,9 +625,10 @@
   const certificateTypeLoading = ref(false)
   const dialogVisible = ref(false)
   const dialogTitle = ref('新增人员')
+  const dialogMode = ref<DialogMode>('add')
+  const currentEditId = ref<number | null>(null)
   const formRef = ref<FormInstance>()
   const tableData = ref<PersonItem[]>([])
-  const rawCertificates = ref<PersonDetailResponse['certificates']>([])
   const certificateTypeOptions = ref<DictItemItem[]>([])
 
   const pagination = reactive({
@@ -655,6 +725,8 @@
     const age = getAgeFromBirthDate(formData.birthDate) ?? getAgeFromIdCard(formData.idNumber)
     return age == null ? '-' : String(age)
   })
+
+  const isViewMode = computed(() => dialogMode.value === 'view')
 
   watch(
     contactForms,
@@ -841,6 +913,7 @@
   })
 
   const resetFormData = () => {
+    currentEditId.value = null
     Object.assign(formData, {
       name: '',
       idNumber: null,
@@ -855,7 +928,100 @@
 
     contactForms.value = [createContactFormItem({ contactType: 'phone', primary: 1 })]
     certificateForms.value = [createCertificateFormItem()]
-    rawCertificates.value = []
+  }
+
+  const normalizeContactForms = (contacts: PersonContactItem[] = []) => {
+    if (!contacts.length) {
+      return [createContactFormItem({ contactType: 'phone', primary: 1 })]
+    }
+
+    return contacts.map((item) =>
+      createContactFormItem({
+        id: item.id,
+        contactType: item.contactType,
+        contactValue: item.contactValue,
+        primary: item.primary ?? 0,
+        status: item.status ?? 1,
+        remark: item.remark ?? null
+      })
+    )
+  }
+
+  const createUploadedFileList = (fileIds: number[] = []) =>
+    fileIds.map((id) => ({
+      id,
+      name: `文件ID: ${id}`,
+      path: '',
+      contentType: null,
+      ext: null,
+      size: 0
+    })) as UploadedFileItem[]
+
+  const normalizeCertificateFileList = (certificate: PersonCertificateSubmitItem) => {
+    if (certificate.files?.length) {
+      return certificate.files.map((item) => ({
+        id: item.id,
+        name: item.name,
+        path: item.path,
+        contentType: item.contentType,
+        ext: item.ext,
+        size: item.size
+      }))
+    }
+
+    return createUploadedFileList(certificate.fileIds || [])
+  }
+
+  const normalizeCertificateForms = (certificates: PersonCertificateSubmitItem[] = []) =>
+    certificates.length
+      ? certificates.map((item) => {
+          const normalizedFileIds = item.files?.length
+            ? item.files.map((file) => file.id)
+            : item.fileIds || []
+
+          const certificate = createCertificateFormItem({
+            id: item.id,
+            certificateTypeId: item.certificateType?.id || item.certificateTypeId,
+            certificateTypeName: item.certificateType?.dictValue || item.certificateTypeName,
+            certNumber: item.certNumber,
+            issueDate: item.issueDate,
+            expiryDate: item.expiryDate,
+            issuingAuthority: item.issuingAuthority,
+            dynamicFields: item.dynamicFields,
+            fileIds: normalizedFileIds,
+            status: item.status ?? 1,
+            remark: item.remark ?? null
+          })
+
+          certificate.fileList = normalizeCertificateFileList(item)
+
+          const templateSource =
+            item.certificateType ||
+            certificateTypeOptions.value.find(
+              (option) => option.id === certificate.certificateTypeId
+            ) ||
+            null
+          applyCertificateTemplate(certificate, templateSource?.formTemplate || null)
+          return certificate
+        })
+      : [createCertificateFormItem()]
+
+  const populateFormByDetail = (detail: PersonDetailResponse) => {
+    currentEditId.value = detail.id
+    Object.assign(formData, {
+      name: detail.name || '',
+      idNumber: detail.idNumber || null,
+      gender: detail.gender || null,
+      nation: detail.nation || null,
+      birthDate: detail.birthDate || null,
+      address: detail.address || null,
+      remark: detail.remark || null,
+      contacts: [],
+      certificates: []
+    })
+
+    contactForms.value = normalizeContactForms(detail.contacts)
+    certificateForms.value = normalizeCertificateForms(detail.certificates || [])
   }
 
   const normalizeTemplateFields = (
@@ -1178,6 +1344,7 @@
 
   const handleAdd = async () => {
     dialogTitle.value = '新增人员'
+    dialogMode.value = 'add'
     resetFormData()
     if (!certificateTypeOptions.value.length) {
       await fetchCertificateTypes()
@@ -1186,14 +1353,27 @@
   }
 
   const handleEdit = async (row: PersonItem) => {
+    dialogTitle.value = '编辑人员'
+    dialogMode.value = 'edit'
+    resetFormData()
+    if (!certificateTypeOptions.value.length) {
+      await fetchCertificateTypes()
+    }
     const detail = (await fetchGetPersonDetail(row.id)) as PersonDetailResponse
-    rawCertificates.value = detail.certificates || []
-    ElMessage.info(`编辑人员功能后续补充完整表单，当前人员：${detail.name}`)
+    populateFormByDetail(detail)
+    dialogVisible.value = true
   }
 
   const handleDetail = async (row: PersonItem) => {
-    const detail = await fetchGetPersonDetail(row.id)
-    ElMessage.info(`查看人员：${detail.name}`)
+    dialogTitle.value = '查看人员'
+    dialogMode.value = 'view'
+    resetFormData()
+    if (!certificateTypeOptions.value.length) {
+      await fetchCertificateTypes()
+    }
+    const detail = (await fetchGetPersonDetail(row.id)) as PersonDetailResponse
+    populateFormByDetail(detail)
+    dialogVisible.value = true
   }
 
   const handleDelete = (row: PersonItem) => {
@@ -1222,9 +1402,10 @@
     submitting.value = true
 
     try {
-      await fetchAddPerson({
+      const submitPayload: PersonSubmitParams = {
         ...formData,
         contacts: formData.contacts.map((item) => ({
+          id: item.id,
           contactType: item.contactType,
           contactValue: item.contactValue,
           primary: item.primary,
@@ -1232,6 +1413,7 @@
           remark: item.remark
         })),
         certificates: formData.certificates.map((item) => ({
+          id: item.id,
           certificateTypeId: item.certificateTypeId,
           certificateTypeName: item.certificateTypeName,
           certNumber: item.certNumber,
@@ -1239,9 +1421,17 @@
           expiryDate: item.expiryDate,
           issuingAuthority: item.issuingAuthority,
           dynamicFields: item.dynamicFields,
-          fileIds: item.fileIds
+          fileIds: item.fileIds,
+          status: item.status,
+          remark: item.remark
         }))
-      })
+      }
+
+      if (dialogMode.value === 'edit' && currentEditId.value != null) {
+        await fetchEditPerson(currentEditId.value, submitPayload)
+      } else {
+        await fetchAddPerson(submitPayload)
+      }
 
       dialogVisible.value = false
       fetchData()
@@ -1393,5 +1583,42 @@
 
   :deep(.personnel-dialog textarea.el-textarea__inner) {
     min-height: 64px !important;
+  }
+
+  :deep(.personnel-dialog-view .el-input.is-disabled .el-input__wrapper),
+  :deep(.personnel-dialog-view .el-textarea.is-disabled .el-textarea__inner),
+  :deep(.personnel-dialog-view .el-select .el-select__wrapper.is-disabled),
+  :deep(.personnel-dialog-view .el-date-editor.is-disabled),
+  :deep(.personnel-dialog-view .el-date-editor.is-disabled .el-input__wrapper) {
+    color: var(--art-gray-900);
+    cursor: default;
+    background: var(--el-fill-color-lighter);
+    border-color: var(--el-border-color-lighter);
+    box-shadow: none;
+    opacity: 1;
+  }
+
+  :deep(.personnel-dialog-view .el-input.is-disabled input),
+  :deep(.personnel-dialog-view .el-textarea.is-disabled textarea),
+  :deep(
+    .personnel-dialog-view .el-select .el-select__wrapper.is-disabled .el-select__selected-item
+  ),
+  :deep(.personnel-dialog-view .el-date-editor.is-disabled input) {
+    color: var(--art-gray-900);
+    -webkit-text-fill-color: var(--art-gray-900);
+  }
+
+  :deep(.personnel-dialog-view .el-input.is-disabled .el-input__suffix),
+  :deep(.personnel-dialog-view .el-select .el-select__wrapper.is-disabled .el-select__caret),
+  :deep(.personnel-dialog-view .el-date-editor.is-disabled .el-input__prefix) {
+    color: var(--art-gray-500);
+  }
+
+  :deep(.personnel-dialog-view .el-switch.is-disabled) {
+    opacity: 1;
+  }
+
+  :deep(.personnel-dialog-view .el-switch.is-disabled .el-switch__core) {
+    cursor: default;
   }
 </style>

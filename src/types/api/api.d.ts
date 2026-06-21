@@ -167,6 +167,9 @@ declare namespace Api {
       id: number
       contactType: string
       contactValue: string
+      primary?: 0 | 1
+      status?: 0 | 1
+      remark?: string | null
     }
 
     /** 人员提交联系方式 */
@@ -190,6 +193,10 @@ declare namespace Api {
       issuingAuthority: string | null
       dynamicFields: Record<string, any> | null
       fileIds: number[]
+      status?: 0 | 1 | 2
+      remark?: string | null
+      certificateType?: DictItemItem | null
+      files?: FileListItem[]
     }
 
     /** 人员列表项 */
