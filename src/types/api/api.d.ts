@@ -135,31 +135,102 @@ declare namespace Api {
         }
     >
 
-    /** 企业列表 */
+    /** ???? */
     type CompanyList = Api.Common.PaginatedResponse<CompanyListItem>
 
-    /** 企业列表项 */
+    /** ?????? */
+    type CompanyContactItem = PersonContactItem
+
+    /** ???????? */
+    type CompanyContactSubmitItem = PersonContactSubmitItem
+
+    /** ?????? */
+    type CompanyCertificateSubmitItem = PersonCertificateSubmitItem
+
+    /** ??????? */
+    interface CompanyReceiptAccountItem {
+      id: number
+      accountName: string
+      bankName: string
+      bankBranchName?: string | null
+      accountNo: string
+      unionBankNo?: string | null
+      primary?: 0 | 1
+      status?: 0 | 1
+      remark?: string | null
+      createdBy?: number | null
+      createdAt?: string | null
+      updatedBy?: number | null
+      updatedAt?: string | null
+    }
+
+    /** ????????? */
+    interface CompanyReceiptAccountSubmitItem {
+      id?: number
+      accountName: string
+      bankName: string
+      bankBranchName?: string | null
+      accountNo: string
+      unionBankNo?: string | null
+      primary?: 0 | 1
+      status?: 0 | 1
+      remark?: string | null
+    }
+
+    /** ????? */
     interface CompanyListItem {
       id: number
       name: string
       shortName: string
-      creditCode: string
-      taxpayerScale: string
-      admissionCode: string
-      admissionStatus: 'enabled' | 'pending' | 'disabled'
-      contactPerson: string
-      contactPhone: string
+      creditCode: string | null
+      taxpayerScale: string | null
+      admissionCode: string | null
+      admissionStatus: 'enabled' | 'pending' | 'disabled' | null
+      legalPerson?: string | null
+      contactPerson?: string | null
+      contactPhone?: string | null
+      email?: string | null
+      registeredCapital?: string | null
+      establishDate?: string | null
+      status?: string | null
+      businessScope?: string | null
+      registeredAddress?: string | null
+      officeAddress?: string | null
+      remark?: string | null
+      contacts?: CompanyContactItem[]
+      certificates?: CompanyCertificateSubmitItem[]
+      receiptAccounts?: CompanyReceiptAccountItem[]
+      createdBy?: number | null
+      createdAt?: string | null
+      updatedBy?: number | null
+      updatedAt?: string | null
     }
 
-    /** 企业搜索参数 */
+    /** ?????? */
     type CompanySearchParams = Partial<
       Pick<CompanyListItem, 'name'> & Api.Common.CommonSearchParams
     >
 
-    /** 企业提交参数 */
-    type CompanySubmitParams = Omit<CompanyListItem, 'id'>
+    /** ?????? */
+    interface CompanySubmitParams {
+      name: string
+      shortName: string
+      creditCode: string | null
+      taxpayerScale: string | null
+      admissionCode: string | null
+      admissionStatus: 'enabled' | 'pending' | 'disabled' | null
+      registeredCapital?: string | null
+      establishDate?: string | null
+      status?: string | null
+      businessScope?: string | null
+      registeredAddress?: string | null
+      officeAddress?: string | null
+      remark?: string | null
+      contacts: CompanyContactSubmitItem[]
+      certificates: CompanyCertificateSubmitItem[]
+      receiptAccounts: CompanyReceiptAccountSubmitItem[]
+    }
 
-    /** 人员列表 */
     type PersonList = Api.Common.PaginatedResponse<PersonListItem>
 
     /** 人员联系方式 */

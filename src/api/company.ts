@@ -7,6 +7,12 @@ export function fetchGetCompanyList(params: Api.SystemManage.CompanySearchParams
   })
 }
 
+export function fetchGetCompanyDetail(id: number) {
+  return request.get<Api.SystemManage.CompanyListItem>({
+    url: `/api/company/${id}`
+  })
+}
+
 export function fetchAddCompany(params: Api.SystemManage.CompanySubmitParams) {
   return request.post<void>({
     url: '/api/company/add',
