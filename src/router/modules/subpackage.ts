@@ -75,7 +75,7 @@ export const subpackageRoutes: AppRouteRecord = {
           name: 'SubpackageCodeGenerator',
           component: '/subpackage/settings/generator',
           meta: {
-            title: '代码生成',
+            title: 'menus.subpackage.generator',
             icon: 'ri:code-box-line',
             keepAlive: true
           }

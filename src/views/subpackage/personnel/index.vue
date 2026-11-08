@@ -498,15 +498,13 @@
 </template>
 
 <script setup lang="ts">
-  import type { UploadFile } from 'element-plus'
-  import type { FormInstance, FormItemRule, FormRules } from 'element-plus'
+  import type { FormInstance, FormRules } from 'element-plus'
   import type { ColumnOption } from '@/types/component'
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
   import { Plus } from '@element-plus/icons-vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
-  import { fetchGetDictItemsByTypeCode } from '@/api/dict'
-  import { fetchUploadFile } from '@/api/file'
+  import { useCertificateForm } from '../composables/useCertificateForm'
   import {
     fetchAddPerson,
     fetchDeletePerson,
@@ -522,30 +520,14 @@
   type PersonContactItem = Api.SystemManage.PersonContactItem
   type PersonContactSubmitItem = Api.SystemManage.PersonContactSubmitItem
   type PersonCertificateSubmitItem = Api.SystemManage.PersonCertificateSubmitItem
-  type DictItemItem = Api.SystemManage.DictItemItem
   type GenderValue = Exclude<PersonItem['gender'], null>
-  type TemplateFieldDef = NonNullable<NonNullable<DictItemItem['formTemplate']>['fields']>[number]
 
   type PersonDetailResponse = PersonItem & {
     certificates?: PersonCertificateSubmitItem[]
   }
 
-  type UploadedFileItem = Pick<
-    Api.SystemManage.FileListItem,
-    'id' | 'name' | 'path' | 'contentType' | 'ext' | 'size'
-  >
-
   interface ContactFormItem extends PersonContactSubmitItem {
     _key: string
-  }
-
-  interface CertificateFormItem extends PersonCertificateSubmitItem {
-    _key: string
-    status: 0 | 1 | 2
-    remark: string | null
-    templateFields: TemplateFieldDef[]
-    fileList: UploadedFileItem[]
-    uploading: boolean
   }
 
   type DialogMode = 'add' | 'edit' | 'view'
@@ -622,14 +604,34 @@
 
   const loading = ref(false)
   const submitting = ref(false)
-  const certificateTypeLoading = ref(false)
   const dialogVisible = ref(false)
   const dialogTitle = ref('新增人员')
   const dialogMode = ref<DialogMode>('add')
   const currentEditId = ref<number | null>(null)
   const formRef = ref<FormInstance>()
   const tableData = ref<PersonItem[]>([])
-  const certificateTypeOptions = ref<DictItemItem[]>([])
+
+  const {
+    certificateTypeOptions,
+    certificateTypeLoading,
+    certificateForms,
+    createCertificateFormItem,
+    normalizeCertificateForms,
+    buildDynamicFieldRules,
+    getDynamicFieldValue,
+    setDynamicFieldValue,
+    formatFileSize,
+    handleAddCertificate,
+    handleRemoveCertificate,
+    handleCertificateTypeChange,
+    handleUploadFileChange,
+    handleRemoveUploadedFile,
+    validateCertificateDynamicFields,
+    fetchCertificateTypes
+  } = useCertificateForm({
+    typeCode: 'personal_documents',
+    uploadBusinessType: 'personal_documents'
+  })
 
   const pagination = reactive({
     current: 1,
@@ -689,7 +691,6 @@
   })
 
   const contactForms = ref<ContactFormItem[]>([])
-  const certificateForms = ref<CertificateFormItem[]>([])
 
   const formRules: FormRules = {
     name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
@@ -892,26 +893,6 @@
     id: init?.id
   })
 
-  const createCertificateFormItem = (
-    init?: Partial<PersonCertificateSubmitItem> & { status?: 0 | 1 | 2; remark?: string | null }
-  ): CertificateFormItem => ({
-    _key: `certificate_${++dynamicKeySeed}`,
-    id: init?.id,
-    certificateTypeId: init?.certificateTypeId || 0,
-    certificateTypeName: init?.certificateTypeName || '',
-    certNumber: init?.certNumber || null,
-    issueDate: init?.issueDate || null,
-    expiryDate: init?.expiryDate || null,
-    issuingAuthority: init?.issuingAuthority || null,
-    dynamicFields: init?.dynamicFields ? { ...init.dynamicFields } : null,
-    fileIds: init?.fileIds ? [...init.fileIds] : [],
-    status: init?.status ?? 1,
-    remark: init?.remark ?? null,
-    templateFields: [],
-    fileList: [],
-    uploading: false
-  })
-
   const resetFormData = () => {
     currentEditId.value = null
     Object.assign(formData, {
@@ -947,65 +928,6 @@
     )
   }
 
-  const createUploadedFileList = (fileIds: number[] = []) =>
-    fileIds.map((id) => ({
-      id,
-      name: `文件ID: ${id}`,
-      path: '',
-      contentType: null,
-      ext: null,
-      size: 0
-    })) as UploadedFileItem[]
-
-  const normalizeCertificateFileList = (certificate: PersonCertificateSubmitItem) => {
-    if (certificate.files?.length) {
-      return certificate.files.map((item) => ({
-        id: item.id,
-        name: item.name,
-        path: item.path,
-        contentType: item.contentType,
-        ext: item.ext,
-        size: item.size
-      }))
-    }
-
-    return createUploadedFileList(certificate.fileIds || [])
-  }
-
-  const normalizeCertificateForms = (certificates: PersonCertificateSubmitItem[] = []) =>
-    certificates.length
-      ? certificates.map((item) => {
-          const normalizedFileIds = item.files?.length
-            ? item.files.map((file) => file.id)
-            : item.fileIds || []
-
-          const certificate = createCertificateFormItem({
-            id: item.id,
-            certificateTypeId: item.certificateType?.id || item.certificateTypeId,
-            certificateTypeName: item.certificateType?.dictValue || item.certificateTypeName,
-            certNumber: item.certNumber,
-            issueDate: item.issueDate,
-            expiryDate: item.expiryDate,
-            issuingAuthority: item.issuingAuthority,
-            dynamicFields: item.dynamicFields,
-            fileIds: normalizedFileIds,
-            status: item.status ?? 1,
-            remark: item.remark ?? null
-          })
-
-          certificate.fileList = normalizeCertificateFileList(item)
-
-          const templateSource =
-            item.certificateType ||
-            certificateTypeOptions.value.find(
-              (option) => option.id === certificate.certificateTypeId
-            ) ||
-            null
-          applyCertificateTemplate(certificate, templateSource?.formTemplate || null)
-          return certificate
-        })
-      : [createCertificateFormItem()]
-
   const populateFormByDetail = (detail: PersonDetailResponse) => {
     currentEditId.value = detail.id
     Object.assign(formData, {
@@ -1022,59 +944,6 @@
 
     contactForms.value = normalizeContactForms(detail.contacts)
     certificateForms.value = normalizeCertificateForms(detail.certificates || [])
-  }
-
-  const normalizeTemplateFields = (
-    formTemplate: DictItemItem['formTemplate']
-  ): TemplateFieldDef[] =>
-    formTemplate?.fields?.map((field) => ({ ...field, options: field.options || [] })) || []
-
-  const applyCertificateTemplate = (
-    certificate: CertificateFormItem,
-    formTemplate: DictItemItem['formTemplate']
-  ) => {
-    const fields = normalizeTemplateFields(formTemplate)
-    const currentValues = certificate.dynamicFields || {}
-    const nextDynamicFields = fields.reduce<Record<string, any>>((accumulator, field) => {
-      if (currentValues[field.name] != null && currentValues[field.name] !== '') {
-        accumulator[field.name] = currentValues[field.name]
-      }
-      return accumulator
-    }, {})
-
-    certificate.templateFields = fields
-    certificate.dynamicFields = Object.keys(nextDynamicFields).length ? nextDynamicFields : null
-  }
-
-  const buildDynamicFieldRules = (field: TemplateFieldDef): FormItemRule[] => {
-    if (!field.required) return []
-
-    return [
-      {
-        required: true,
-        message: `${field.type === 'select' ? '请选择' : '请输入'}${field.label}`,
-        trigger: field.type === 'select' ? 'change' : 'blur'
-      }
-    ]
-  }
-
-  const getDynamicFieldValue = (certificate: CertificateFormItem, fieldName: string) =>
-    certificate.dynamicFields?.[fieldName] ?? undefined
-
-  const setDynamicFieldValue = (
-    certificate: CertificateFormItem,
-    fieldName: string,
-    value: string | number | undefined
-  ) => {
-    const nextFields = { ...(certificate.dynamicFields || {}) }
-
-    if (value == null || value === '') {
-      delete nextFields[fieldName]
-    } else {
-      nextFields[fieldName] = value
-    }
-
-    certificate.dynamicFields = Object.keys(nextFields).length ? nextFields : null
   }
 
   const getAgeFromBirthDate = (birthDate?: string | null) => {
@@ -1185,73 +1054,6 @@
     }
   }
 
-  const handleAddCertificate = () => {
-    certificateForms.value.push(createCertificateFormItem())
-  }
-
-  const handleRemoveCertificate = (index: number) => {
-    certificateForms.value.splice(index, 1)
-  }
-
-  const handleCertificateTypeChange = (index: number, value?: number) => {
-    const certificate = certificateForms.value[index]
-    if (!certificate) return
-
-    if (!value) {
-      certificate.certificateTypeId = 0
-      certificate.certificateTypeName = ''
-      certificate.templateFields = []
-      certificate.dynamicFields = null
-      return
-    }
-
-    const matched = certificateTypeOptions.value.find((item) => item.id === value)
-    certificate.certificateTypeId = value
-    certificate.certificateTypeName = matched?.dictValue || ''
-    applyCertificateTemplate(certificate, matched?.formTemplate || null)
-  }
-
-  const formatFileSize = (size?: number | null) => {
-    if (size == null) return '-'
-    if (size < 1024) return `${size} B`
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`
-    if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(2)} MB`
-    return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`
-  }
-
-  const handleUploadFileChange = async (index: number, uploadFile: UploadFile) => {
-    const rawFile = uploadFile.raw
-    const certificate = certificateForms.value[index]
-    if (!rawFile || !certificate) return
-
-    certificate.uploading = true
-
-    try {
-      const uploaded = await fetchUploadFile(rawFile, 'personal_documents', '')
-      if (!certificate.fileIds.includes(uploaded.id)) {
-        certificate.fileIds.push(uploaded.id)
-      }
-      certificate.fileList.push({
-        id: uploaded.id,
-        name: uploaded.name,
-        path: uploaded.path,
-        contentType: uploaded.contentType,
-        ext: uploaded.ext,
-        size: uploaded.size
-      })
-    } finally {
-      certificate.uploading = false
-    }
-  }
-
-  const handleRemoveUploadedFile = (index: number, fileId: number) => {
-    const certificate = certificateForms.value[index]
-    if (!certificate) return
-
-    certificate.fileIds = certificate.fileIds.filter((id) => id !== fileId)
-    certificate.fileList = certificate.fileList.filter((item) => item.id !== fileId)
-  }
-
   const handleIdNumberBlur = () => {
     if (!formData.idNumber) return
 
@@ -1264,34 +1066,6 @@
 
     if (!formData.gender) {
       formData.gender = parseGenderFromIdCard(formData.idNumber)
-    }
-  }
-
-  const validateCertificateDynamicFields = () => {
-    for (const certificate of certificateForms.value) {
-      for (const field of certificate.templateFields) {
-        if (!field.required) continue
-
-        const value = certificate.dynamicFields?.[field.name]
-        if (value == null || value === '') {
-          ElMessage.error(
-            `${certificate.certificateTypeName || '证书证件'}的${field.label}不能为空`
-          )
-          return false
-        }
-      }
-    }
-
-    return true
-  }
-
-  const fetchCertificateTypes = async () => {
-    certificateTypeLoading.value = true
-
-    try {
-      certificateTypeOptions.value = await fetchGetDictItemsByTypeCode('personal_documents')
-    } finally {
-      certificateTypeLoading.value = false
     }
   }
 
