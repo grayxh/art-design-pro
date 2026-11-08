@@ -69,6 +69,16 @@ export const subpackageRoutes: AppRouteRecord = {
             icon: 'ri:file-list-3-line',
             keepAlive: true
           }
+        },
+        {
+          path: 'generator',
+          name: 'SubpackageCodeGenerator',
+          component: '/subpackage/settings/generator',
+          meta: {
+            title: '代码生成',
+            icon: 'ri:code-box-line',
+            keepAlive: true
+          }
         }
       ]
     }
