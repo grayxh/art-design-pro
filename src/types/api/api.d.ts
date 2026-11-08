@@ -135,19 +135,19 @@ declare namespace Api {
         }
     >
 
-    /** ???? */
+    /** 企业列表 */
     type CompanyList = Api.Common.PaginatedResponse<CompanyListItem>
 
-    /** ?????? */
+    /** 企业联系方式 */
     type CompanyContactItem = PersonContactItem
 
-    /** ???????? */
+    /** 企业提交联系方式 */
     type CompanyContactSubmitItem = PersonContactSubmitItem
 
-    /** ?????? */
+    /** 企业提交证件 */
     type CompanyCertificateSubmitItem = PersonCertificateSubmitItem
 
-    /** ??????? */
+    /** 企业收款账户 */
     interface CompanyReceiptAccountItem {
       id: number
       accountName: string
@@ -164,7 +164,7 @@ declare namespace Api {
       updatedAt?: string | null
     }
 
-    /** ????????? */
+    /** 企业提交收款账户 */
     interface CompanyReceiptAccountSubmitItem {
       id?: number
       accountName: string
@@ -177,7 +177,7 @@ declare namespace Api {
       remark?: string | null
     }
 
-    /** ????? */
+    /** 企业列表项 */
     interface CompanyListItem {
       id: number
       name: string
@@ -206,12 +206,12 @@ declare namespace Api {
       updatedAt?: string | null
     }
 
-    /** ?????? */
+    /** 企业搜索参数 */
     type CompanySearchParams = Partial<
       Pick<CompanyListItem, 'name'> & Api.Common.CommonSearchParams
     >
 
-    /** ?????? */
+    /** 企业提交参数 */
     interface CompanySubmitParams {
       name: string
       shortName: string
@@ -346,10 +346,10 @@ declare namespace Api {
         Api.Common.CommonSearchParams
     >
 
-    /** 绯荤粺绠€鍗曞瓧鍏稿垪琛?*/
+    /** 系统简单字典列表 */
     type SysDictList = Api.Common.PaginatedResponse<SysDictItem>
 
-    /** 绯荤粺绠€鍗曞瓧鍏搁」 */
+    /** 系统简单字典项 */
     interface SysDictItem {
       id: number
       dictType: string
@@ -367,13 +367,13 @@ declare namespace Api {
       updatedAt?: string
     }
 
-    /** 绯荤粺绠€鍗曞瓧鍏告悳绱㈠弬鏁?*/
+    /** 系统简单字典搜索参数 */
     type SysDictSearchParams = Partial<
       Pick<SysDictItem, 'dictType' | 'dictKey' | 'dictValue' | 'status'> &
         Api.Common.CommonSearchParams
     >
 
-    /** 绯荤粺绠€鍗曞瓧鍏告彁浜ゅ弬鏁?*/
+    /** 系统简单字典提交参数 */
     type SysDictSubmitParams = Omit<
       SysDictItem,
       'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'

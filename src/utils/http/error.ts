@@ -56,6 +56,14 @@ export interface ErrorLogData {
 // 自定义 HttpError 类
 export class HttpError extends Error {
   public readonly code: number
+  /**
+   * HTTP 状态码
+   *
+   * `code` 可能是业务码（后端响应体中的 code），也可能是 HTTP 状态码，
+   * 二者语义不同。需要基于 HTTP 状态做判断（如重试）时请使用此字段，
+   * 只有由 HTTP 状态码产生的错误才会有值。
+   */
+  public readonly status?: number
   public readonly data?: unknown
   public readonly timestamp: string
   public readonly url?: string
@@ -65,6 +73,7 @@ export class HttpError extends Error {
     message: string,
     code: number,
     options?: {
+      status?: number
       data?: unknown
       url?: string
       method?: string
@@ -73,6 +82,7 @@ export class HttpError extends Error {
     super(message)
     this.name = 'HttpError'
     this.code = code
+    this.status = options?.status
     this.data = options?.data
     this.timestamp = new Date().toISOString()
     this.url = options?.url
@@ -142,6 +152,7 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
     ? getErrorMessage(statusCode)
     : errorMessage || $t('httpMsg.requestFailed')
   throw new HttpError(message, statusCode || ApiStatus.error, {
+    status: statusCode,
     data: error.response.data,
     url: requestConfig?.url,
     method: requestConfig?.method?.toUpperCase()
